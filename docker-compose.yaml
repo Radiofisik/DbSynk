@@ -1,0 +1,78 @@
+version: '2'
+services:
+  zookeeper:
+    image: debezium/zookeeper:${DEBEZIUM_VERSION}
+    ports:
+     - 2181:2181
+     - 2888:2888
+     - 3888:3888
+     
+  kafka:
+    image: debezium/kafka:${DEBEZIUM_VERSION}
+    ports:
+      - 9092:9092
+    links:
+     - zookeeper
+    environment:
+     - ZOOKEEPER_CONNECT=zookeeper:2181
+
+  kafka-rest:
+    image: nodefluent/kafka-rest:latest
+    ports:
+      - 8082:8082
+    links:
+      - kafka
+      - zookeeper
+    depends_on:
+      - kafka
+      - zookeeper
+    environment:
+      DEBUG: "*"
+
+  kafka-rest-ui:
+    image: nodefluent/kafka-rest-ui
+    ports:
+      - 8000:8000
+    links:
+      - kafka-rest
+    depends_on:
+      - kafka-rest
+    environment:
+      DEBUG: "*,-*babel*,-*eslint*"
+      REACT_APP_KAFKA_REST_URL: "http://kafka-rest:8082/"
+      REACT_APP_TIMEOUT: "3000"
+      PROXY: "yes"
+
+  postgressrc:
+    image: debezium/example-postgres:${DEBEZIUM_VERSION}
+    ports:
+      - "54322:5432"
+    environment:
+      - POSTGRES_USER=postgresuser
+      - POSTGRES_PASSWORD=postgrespw
+      - POSTGRES_DB=inventory
+
+  postgres:
+    image: debezium/postgres:9.6
+    ports:
+     - "5432:5432"
+    environment:
+     - POSTGRES_USER=postgresuser
+     - POSTGRES_PASSWORD=postgrespw
+     - POSTGRES_DB=inventory
+
+  connect:
+    image: debezium/connect-jdbc-es:${DEBEZIUM_VERSION}
+    build:
+      context: debezium-jdbc-es
+    ports:
+     - 8083:8083
+     - 5005:5005
+    links:
+     - kafka
+     - postgres
+    environment:
+     - BOOTSTRAP_SERVERS=kafka:9092
+     - GROUP_ID=1
+     - CONFIG_STORAGE_TOPIC=my_connect_configs
+     - OFFSET_STORAGE_TOPIC=my_connect_offsets
