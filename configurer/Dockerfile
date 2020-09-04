@@ -13,10 +13,8 @@ RUN dpkg-reconfigure -f noninteractive tzdata
 RUN apt-get update && apt-get install -y \
     curl \
     postgresql postgresql-contrib \
-    python2.7 python-pip && \
     curl -sSL https://get.docker.com/ | sh
 
-RUN pip install zc.zk
 COPY ./start.sh /usr/src/
 COPY ./cleanup.sh /usr/src/
 COPY ./json/* /usr/src/
