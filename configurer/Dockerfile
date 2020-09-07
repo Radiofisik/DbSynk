@@ -13,7 +13,7 @@ RUN dpkg-reconfigure -f noninteractive tzdata
 RUN apt-get update && apt-get install -y \
     curl \
     postgresql postgresql-contrib \
-    curl -sSL https://get.docker.com/ | sh
+    && curl -sSL https://get.docker.com/ | sh
 
 COPY ./start.sh /usr/src/
 COPY ./cleanup.sh /usr/src/
